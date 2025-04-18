@@ -1,3 +1,8 @@
+SET SERVEROUTPUT ON;
+
+-------------------------------------------------------------
+------------------------ Create Sequences -------------------
+-------------------------------------------------------------
 drop sequence diary_user_seq;
 drop sequence diary_reminder_seq;
 drop sequence diary_seq;
@@ -8,10 +13,15 @@ CREATE SEQUENCE diary_reminder_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE diary_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE diary_image_seq START WITH 1 INCREMENT BY 1;
 
+-------------------------------------------------------------
+------------------------ Create Tables ----------------------
+-------------------------------------------------------------
+
 DROP TABLE diary_image CASCADE CONSTRAINTS;
 DROP TABLE diary CASCADE CONSTRAINTS;
 DROP TABLE diary_reminder CASCADE CONSTRAINTS;
 DROP TABLE diary_users CASCADE CONSTRAINTS;
+
 
 CREATE TABLE diary_users (
   user_id         INT PRIMARY KEY,
@@ -46,150 +56,209 @@ CREATE TABLE diary_image (
 );
 
 
+
+-------------------------------------------------------------
+------------------------ REMINDERS --------------------------
+-------------------------------------------------------------
 create or replace
-PROCEDURE RETRIEVE_OVERDUE_REMINDERS(USER_ID INTEGER, REMINDERS OUT SYS_REFCURSOR )
+PROCEDURE RETRIEVE_OVERDUE_REMINDERS(r_USER_ID INTEGER, REMINDERS OUT SYS_REFCURSOR )
 AS
 BEGIN
   OPEN reminders FOR 
-    SELECT P.REMINDER_TITLE, P.REMINDER_TIME, P.REMINDER_ID
+    SELECT P.REMINDER_TITLE, to_char(P.REMINDER_TIME, 'YYYY-MM-DD HH24:MI:SS'), P.REMINDER_ID
     FROM DIARY_REMINDER P
-    WHERE P.USER_ID = user_id AND P.REMINDER_TIME < SYSDATE;
-  DELETE FROM DIARY_REMINDER P WHERE P.USER_ID = user_id AND P.REMINDER_TIME < SYSDATE AND P.REMINDER_INTERVAL = INTERVAL '0' DAY;
+    WHERE P.USER_ID = r_USER_ID AND P.REMINDER_TIME > SYSDATE;
+  DELETE FROM DIARY_REMINDER P WHERE P.USER_ID = r_USER_ID AND P.REMINDER_TIME > SYSDATE AND P.REMINDER_INTERVAL = INTERVAL '0' DAY;
 END ;
 /
 CREATE OR REPLACE 
-PROCEDURE RETRIEVE_REMINDERS(USER_ID INTEGER, REMINDERS OUT SYS_REFCURSOR )
+PROCEDURE RETRIEVE_REMINDERS(r_USER_ID INTEGER, REMINDERS OUT SYS_REFCURSOR )
 AS
 BEGIN
   OPEN reminders FOR 
-    SELECT P.REMINDER_TITLE, P.REMINDER_TIME, P.REMINDER_INTERVAL, P.REMINDER_ID
+    SELECT P.REMINDER_TITLE, to_char(P.REMINDER_TIME, 'YYYY-MM-DD HH24:MI:SS'), P.REMINDER_ID, to_char(P.REMINDER_INTERVAL, 'YYYY-MM-DD HH24:MI:SS')
     FROM DIARY_REMINDER P
-    WHERE P.USER_ID = user_id;
+    WHERE P.USER_ID = r_USER_ID;
 END;
 /
 CREATE OR REPLACE 
-PROCEDURE DELETE_REMINDERS(USER_ID INTEGER, REMINDER_ID INTEGER)
+PROCEDURE DELETE_REMINDERS(r_USER_ID INTEGER, r_REMINDER_ID INTEGER)
 AS
 BEGIN
-  DELETE FROM DIARY_REMINDER P WHERE P.user_id = user_id AND REMINDER_ID = P.REMINDER_ID;
-END;
-/
-CREATE OR REPLACE 
-PROCEDURE UPDATE_OVERDUE_REMINDERS(USER_ID INTEGER)
-AS
-BEGIN 
-  UPDATE DIARY_REMINDER P SET P.REMINDER_TIME = P.REMINDER_TIME + P.REMINDER_INTERVAL WHERE P.USER_ID = user_id AND P.REMINDER_TIME < SYSDATE;
-END;
-/
-CREATE OR REPLACE 
-PROCEDURE INSERT_REMINDER(USER_ID INTEGER, REMINDER_TITLE VARCHAR2, REMINDER_TIME DATE, REMINDER_INTERVAL INTERVAL DAY TO SECOND)
-AS
-BEGIN
-  INSERT INTO diary_reminder VALUES(DIARY_REMINDER_SEQ.NEXTVAL, user_id, reminder_interval, REMINDER_TIME, REMINDER_TITLE);
-END;
-/
-CREATE OR REPLACE
-PROCEDURE CHECK_USERNAME_AND_PASSWORD(USERNAME VARCHAR2, USER_PASSWORD VARCHAR2, PREMIUM OUT CHAR, USER_ID OUT INTEGER)
-AS
-BEGIN
-SELECT U.PREMIUM, U.USER_ID INTO PREMIUM, user_id
-FROM diary_users U
-WHERE USERNAME = U.USERNAME AND USER_PASSWORD = U.USER_PASSWORD;
+  DELETE FROM DIARY_REMINDER P WHERE P.user_id = r_USER_ID AND r_REMINDER_ID = P.REMINDER_ID;
 END;
 /
 create or replace
-PROCEDURE CREATE_USER (USERNAME VARCHAR2, USER_PASSWORD VARCHAR2, FLAG OUT CHAR)
+PROCEDURE UPDATE_OVERDUE_REMINDERS(r_USER_ID INTEGER)
+AS
+BEGIN 
+  UPDATE DIARY_REMINDER P 
+  SET P.REMINDER_TIME = P.REMINDER_TIME + P.REMINDER_INTERVAL * CEIL((SYSDATE - P.REMINDER_TIME)/(
+                                                                                                    EXTRACT(DAY FROM P.REMINDER_INTERVAL) +
+                                                                                                    EXTRACT(HOUR FROM P.REMINDER_INTERVAL) / 24 +
+                                                                                                    EXTRACT(MINUTE FROM P.REMINDER_INTERVAL) / 1440 +
+                                                                                                    EXTRACT(SECOND FROM P.REMINDER_INTERVAL) / 86400
+                                                                                                  )) 
+  WHERE P.USER_ID = r_USER_ID AND P.REMINDER_TIME < SYSDATE;
+END;
+/
+CREATE OR REPLACE 
+PROCEDURE INSERT_REMINDER(
+  r_USER_ID           INTEGER, 
+  r_REMINDER_TITLE    VARCHAR2, 
+  r_REMINDER_TIME     date, 
+  r_REMINDER_INTERVAL interval day to second
+)
 AS
 BEGIN
-SELECT 'N' INTO FLAG
+  INSERT INTO diary_reminder 
+  VALUES (
+    DIARY_REMINDER_SEQ.NEXTVAL, 
+    r_USER_ID, 
+    r_REMINDER_INTERVAL,
+    TO_DATE(r_REMINDER_TIME, 'YYYY-MM-DD HH24:MI:SS'),
+    r_REMINDER_TITLE 
+    );
+END;
+
+
+/
+
+
+
+
+-------------------------------------------------------------
+------------------------ Users ------------------------------
+-------------------------------------------------------------
+
+CREATE OR REPLACE
+PROCEDURE CHECK_USERNAME_AND_PASSWORD(u_USERNAME VARCHAR2, u_USER_PASSWORD VARCHAR2, o_USER_ID OUT INTEGER)
+AS
+BEGIN
+SELECT case when count(*) > 0 then min(u.user_id) else -1 end INTO o_USER_ID
 FROM diary_users U
-WHERE U.username = username;
-
-IF FLAG <> 'N' THEN
-  FLAG := 'Y';
-  INSERT INTO diary_users VALUES (DIARY_USER_SEQ.NEXTVAL, username, user_password, 'N');
-END IF;
+WHERE u_USERNAME = U.USERNAME AND u_USER_PASSWORD = U.USER_PASSWORD;
 END;
 /
-CREATE OR REPLACE
-PROCEDURE UPDATE_PASSWORD (USER_ID INTEGER, CURRENT_PASSWORD INTEGER, NEW_PASSWORD INTEGER, FLAG OUT CHAR)
+create or replace
+PROCEDURE CREATE_USER (u_USERNAME VARCHAR2, u_USER_PASSWORD VARCHAR2, FLAG OUT CHAR)
 AS
+counter Integer;
 BEGIN
-SELECT 'Y' INTO FLAG
-FROM DIARY_USERS U
-WHERE U.USER_ID = user_id AND U.user_password = current_password;
-
-IF FLAG <> 'Y' THEN
-  FLAG := 'N';
-ELSE
-  UPDATE DIARY_USERS U SET U.user_password = new_password WHERE U.user_id = user_id;
-END IF;
+  SELECT count(*) INTO counter
+  FROM diary_users U
+  WHERE U.username = u_USERNAME;  
+  IF counter = 0 THEN
+    FLAG := 'Y';
+    INSERT INTO diary_users VALUES (DIARY_USER_SEQ.NEXTVAL, u_USERNAME, u_USER_PASSWORD, 'N');
+  ELSE
+    Flag:='N';
+  END IF;
 END;
 /
 CREATE OR REPLACE
-PROCEDURE UPDATE_PASSWORD (USER_ID INTEGER)
+PROCEDURE UPDATE_PASSWORD (u_USER_ID INTEGER, CURRENT_PASSWORD varchar2, NEW_PASSWORD varchar2, FLAG OUT CHAR)
+AS
+counter Integer;
+BEGIN
+  SELECT count(*) INTO counter
+  FROM DIARY_USERS U
+  WHERE U.USER_ID = u_USER_ID AND U.user_password = current_password;
+  
+  IF counter = 0 THEN
+    FLAG := 'N';
+  ELSE
+    Flag := 'Y';
+    UPDATE DIARY_USERS U SET U.user_password = new_password WHERE U.user_id = u_USER_ID;
+  END IF;
+END;
+/
+CREATE OR REPLACE
+PROCEDURE Set_Premium (USER_ID INTEGER)
 AS
 BEGIN
   UPDATE DIARY_USERS U SET U.PREMIUM = 'Y' WHERE U.user_id = user_id;
 END;
 /
-CREATE OR REPLACE 
-PROCEDURE ADD_DIARY (USER_ID INTEGER, DIARY_ID OUT INTEGER)
+CREATE OR REPLACE
+PROCEDURE remove_Premium (USER_ID INTEGER)
 AS
 BEGIN
-  INSERT INTO DIARY VALUES(DIARY_SEQ.NEXTVAL, user_id, '', 'NEW DIARY', SYSDATE, SYSDATE);
+  UPDATE DIARY_USERS U SET U.PREMIUM = 'N' WHERE U.user_id = user_id;
+END;
+/
+
+
+-------------------------------------------------------------
+------------------------ Diary ------------------------------
+-------------------------------------------------------------
+
+CREATE OR REPLACE 
+PROCEDURE ADD_DIARY (d_USER_ID INTEGER, DIARY_ID OUT INTEGER)
+AS
+BEGIN
+  INSERT INTO DIARY VALUES(DIARY_SEQ.NEXTVAL, d_USER_ID, '', 'NEW DIARY', SYSDATE, SYSDATE);
   DIARY_ID := DIARY_SEQ.CURRVAL;
 END;
 /
 CREATE OR REPLACE
-PROCEDURE UPDATE_TITLE_AND_TEXT(DIARY_ID INTEGER, TITLE VARCHAR, TEXT CLOB)
+PROCEDURE UPDATE_TITLE_AND_TEXT(d_DIARY_ID INTEGER, TITLE VARCHAR, TEXT CLOB)
 AS
 BEGIN
-  UPDATE DIARY D SET D.CYPHER_TITLE = TITLE, D.cypher_text = TEXT, D.LAST_UPDATE_TIME = SYSDATE WHERE diary_id = D.diary_id;
+  UPDATE DIARY D 
+  SET D.CYPHER_TITLE = TITLE, D.cypher_text = TEXT, D.LAST_UPDATE_TIME = sysdate
+  WHERE d_DIARY_ID = D.diary_id;
 END;
 /
 CREATE OR REPLACE 
-PROCEDURE RETRIEVE_DIARY (DIARY_ID INTEGER, DIARY OUT SYS_REFCURSOR)
+PROCEDURE RETRIEVE_DIARY (d_DIARY_ID INTEGER, DIARY OUT SYS_REFCURSOR)
 AS
 BEGIN
   OPEN DIARY FOR
-    SELECT D.CYPHER_TEXT, D.CYPHER_TITLE, D.CREATE_TIME, D.LAST_UPDATE_TIME
+    SELECT D.CYPHER_TEXT, D.CYPHER_TITLE, to_char(D.CREATE_TIME, 'YYYY-MM-DD HH24:MI:SS'), to_char(D.LAST_UPDATE_TIME, 'YYYY-MM-DD HH24:MI:SS')
     FROM DIARY D
-    WHERE diary_id = D.DIARY_ID;
+    WHERE d_DIARY_ID = D.DIARY_ID;
 END;
 /
 CREATE OR REPLACE 
-PROCEDURE retrieve_titles (USER_ID INTEGER, DIARY OUT SYS_REFCURSOR)
+PROCEDURE retrieve_titles (u_USER_ID INTEGER, DIARY OUT SYS_REFCURSOR)
 AS
 BEGIN
   OPEN DIARY FOR
-    SELECT D.DIARY_ID, D.CYPHER_TITLE, D.CREATE_TIME, D.LAST_UPDATE_TIME
+    SELECT D.DIARY_ID, D.CYPHER_TITLE, to_char(D.CREATE_TIME, 'YYYY-MM-DD HH24:MI:SS'), to_char(D.LAST_UPDATE_TIME, 'YYYY-MM-DD HH24:MI:SS')
     FROM DIARY D
-    WHERE user_id = D.USER_ID;
+    WHERE u_USER_ID = D.USER_ID;
 END;
 /
+
+
+
+
+-------------------------------------------------------------
+------------------------ Image ------------------------------
+-------------------------------------------------------------
 CREATE OR REPLACE
-PROCEDURE RETRIEVE_IMAGE (DIARY_ID INTEGER, IMAGES OUT SYS_REFCURSOR)
+PROCEDURE RETRIEVE_IMAGE (d_DIARY_ID INTEGER, IMAGES OUT SYS_REFCURSOR)
 AS
 BEGIN
   OPEN IMAGES FOR
     SELECT IMAGE_PATH, PLACE_IN_TEXT
     FROM DIARY_IMAGE I
-    WHERE diary_id = I.DIARY_ID;
+    WHERE d_DIARY_ID = I.DIARY_ID;
 END;
 /
 CREATE OR REPLACE
-PROCEDURE DELETE_DIARY (DIARY_ID INTEGER)
+PROCEDURE DELETE_DIARY (d_DIARY_ID INTEGER)
 AS
 BEGIN
-  DELETE FROM DIARY I WHERE I.diary_id = DIARY_ID;
+  DELETE FROM DIARY I WHERE I.diary_id = d_DIARY_ID;
 END;
 /
 create or replace
-PROCEDURE DELETE_IMAGE (DIARY_ID INTEGER, IMAGE_ID INTEGER)
+PROCEDURE DELETE_IMAGE (d_DIARY_ID INTEGER, i_IMAGE_ID INTEGER)
 AS
 BEGIN
-  DELETE FROM DIARY_IMAGE I WHERE I.diary_id = DIARY_ID AND I.image_id = IMAGE_ID;
+  DELETE FROM DIARY_IMAGE I WHERE I.diary_id = d_DIARY_ID AND I.image_id = i_IMAGE_ID;
 END;
 /
 create or replace
@@ -200,145 +269,149 @@ BEGIN
 END;
 /
 
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (1, 'johndoe', 'password123', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (2, 'janedoe', 'mypassword', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (3, 'susan89', 'secretpassword', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (4, 'david_miller', 'david1234', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (5, 'lucas_smith', 'lucas2021', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (6, 'emily_williams', 'emily987', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (7, 'michael_jones', 'mjones2022', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (8, 'sara_lee', 'sara_1234', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (9, 'william_brown', 'will123', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (10, 'chloe_davis', 'chloe$123', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (11, 'jackson_clark', 'jacksonpass', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (12, 'olivia_martin', 'olivia2020', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (13, 'brian_rodgers', 'brian9876', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (14, 'emma_hall', 'emma@2021', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (15, 'james_taylor', 'jamest@123', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (16, 'natalie_king', 'natking123', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (17, 'daniel_thompson', 'daniel@22', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (18, 'mia_white', 'mia12345', 'N');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (19, 'henry_moore', 'henry!2022', 'Y');
-INSERT INTO diary_users (user_id, username, user_password, premium) VALUES (20, 'sophia_james', 'sophia_j@2021', 'N');
+
+-------------------------------------------------------------
+------------------------ Insertion --------------------------
+-------------------------------------------------------------
+INSERT INTO diary_users (user_id, username, user_password, premium) 
+VALUES (diary_user_seq.NEXTVAL, 'johndoe', 'password123', 'Y');
+
+-- Uncomment and use the following lines as needed
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'janedoe', 'mypassword', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'susan89', 'secretpassword', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'david_miller', 'david1234', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'lucas_smith', 'lucas2021', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'emily_williams', 'emily987', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'michael_jones', 'mjones2022', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'sara_lee', 'sara_1234', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'william_brown', 'will123', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'chloe_davis', 'chloe$123', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'jackson_clark', 'jacksonpass', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'olivia_martin', 'olivia2020', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'brian_rodgers', 'brian9876', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'emma_hall', 'emma@2021', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'james_taylor', 'jamest@123', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'natalie_king', 'natking123', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'daniel_thompson', 'daniel@22', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'mia_white', 'mia12345', 'N');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'henry_moore', 'henry!2022', 'Y');
+
+ INSERT INTO diary_users (user_id, username, user_password, premium) 
+ VALUES (diary_user_seq.NEXTVAL, 'sophia_james', 'sophia_j@2021', 'N');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 2, INTERVAL '1' DAY, TO_DATE('2025-05-10 10:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Doctor Appointment');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 2, INTERVAL '2' DAY, TO_DATE('2025-04-12 15:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Lunch with Friends');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 3, INTERVAL '3' DAY, TO_DATE('2025-03-25 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Meeting with Client');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 4, INTERVAL '4' DAY, TO_DATE('2025-05-05 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Conference Call');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 5, INTERVAL '5' DAY, TO_DATE('2025-06-10 14:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Project Deadline');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 6, INTERVAL '1' HOUR, TO_DATE('2025-05-18 17:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Flight Departure');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 7, INTERVAL '10' MINUTE, TO_DATE('2025-04-20 20:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Dinner Reservation');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 8, INTERVAL '2' DAY, TO_DATE('2025-07-12 11:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Anniversary Reminder');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 9, INTERVAL '15' MINUTE, TO_DATE('2025-04-28 08:45:00', 'YYYY-MM-DD HH24:MI:SS'), 'Morning Workout');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 10, INTERVAL '1' DAY, TO_DATE('2025-06-02 07:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Yoga Session');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 11, INTERVAL '3' DAY, TO_DATE('2025-08-15 13:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Team Meeting');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 12, INTERVAL '7' DAY, TO_DATE('2025-09-22 16:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Dentist Appointment');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 13, INTERVAL '30' MINUTE, TO_DATE('2025-05-01 14:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Coffee Break');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 14, INTERVAL '3' HOUR, TO_DATE('2025-06-28 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Evening Run');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 15, INTERVAL '5' DAY, TO_DATE('2025-10-30 20:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Birthday Party');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 16, INTERVAL '2' HOUR, TO_DATE('2025-04-15 10:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Product Launch');
+
+ INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
+ VALUES (diary_reminder_seq.NEXTVAL, 2, INTERVAL '1' day, TO_DATE('2025-07-25 09:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Weekly Review');
 
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (1, 1, INTERVAL '1' DAY, TO_DATE('2025-05-10 10:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Doctor Appointment');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 2, 'Today I had a calm and peaceful day, focusing on work and some light reading. The weather was perfect for a walk in the park.', 'A Peaceful Day', TO_DATE('2025-03-01 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-03-01 08:30:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (2, 2, INTERVAL '2' DAY, TO_DATE('2025-04-12 15:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Lunch with Friends');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 2, 'A busy day at work, but I managed to squeeze in some time for a coffee break with a good friend. We talked about our upcoming plans for the weekend.', 'Work and Catching Up', TO_DATE('2025-04-05 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-04-05 09:50:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (3, 3, INTERVAL '3' DAY, TO_DATE('2025-03-25 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Meeting with Client');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 3, 'A stressful but rewarding day. Managed to complete a project I had been working on for weeks, but now I feel exhausted. Time for a well-deserved break!', 'Project Completion', TO_DATE('2025-02-18 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-02-18 18:15:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (4, 4, INTERVAL '4' DAY, TO_DATE('2025-05-05 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Conference Call');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 4, 'Went for a long walk this morning and found myself thinking about life and future goals. Feeling inspired to work harder and stay focused.', 'Morning Reflection', TO_DATE('2025-05-12 07:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-05-12 07:10:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (5, 5, INTERVAL '5' DAY, TO_DATE('2025-06-10 14:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Project Deadline');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 5, 'Had a wonderful lunch with family today. We discussed everything from old memories to future plans. It was great to reconnect with everyone.', 'Family Gathering', TO_DATE('2025-01-19 13:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-01-19 13:45:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (6, 6, INTERVAL '1' HOUR, TO_DATE('2025-05-18 17:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Flight Departure');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 6, 'Spent the day working on personal projects. The progress was steady, but there’s still a lot to do. Looking forward to a relaxing weekend!', 'Personal Projects', TO_DATE('2025-02-22 16:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-02-22 16:30:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (7, 7, INTERVAL '10' MINUTE, TO_DATE('2025-04-20 20:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Dinner Reservation');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 7, 'I had an amazing dinner with friends tonight. We shared lots of laughs and good food. It’s always great to catch up with close friends.', 'Dinner with Friends', TO_DATE('2025-03-10 19:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-03-10 21:00:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (8, 8, INTERVAL '2' DAY, TO_DATE('2025-07-12 11:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Anniversary Reminder');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 8, 'Had a productive meeting with the team today. We laid out the roadmap for the next quarter and discussed key priorities. Feeling optimistic about the direction we’re headed in.', 'Team Meeting', TO_DATE('2025-03-15 10:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-03-15 10:30:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (9, 9, INTERVAL '15' MINUTE, TO_DATE('2025-04-28 08:45:00', 'YYYY-MM-DD HH24:MI:SS'), 'Morning Workout');
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 9, 'Today was a mix of ups and downs. I faced some challenges at work, but I also learned a lot. Trying to stay positive and keep pushing forward.', 'Work Challenges', TO_DATE('2025-04-01 14:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-04-01 14:30:00', 'YYYY-MM-DD HH24:MI:SS'));
 
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (10, 10, INTERVAL '1' DAY, TO_DATE('2025-06-02 07:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Yoga Session');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (11, 11, INTERVAL '3' DAY, TO_DATE('2025-08-15 13:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Team Meeting');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (12, 12, INTERVAL '7' DAY, TO_DATE('2025-09-22 16:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Dentist Appointment');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (13, 13, INTERVAL '30' MINUTE, TO_DATE('2025-05-01 14:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Coffee Break');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (14, 14, INTERVAL '3' HOUR, TO_DATE('2025-06-28 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Evening Run');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (15, 15, INTERVAL '5' DAY, TO_DATE('2025-10-30 20:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Birthday Party');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (16, 16, INTERVAL '1' DAY, TO_DATE('2025-11-12 12:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Monthly Review');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (17, 17, INTERVAL '2' DAY, TO_DATE('2025-07-07 19:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Weekend Trip');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (18, 18, INTERVAL '4' HOUR, TO_DATE('2025-05-23 10:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Conference Registration');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (19, 19, INTERVAL '1' HOUR, TO_DATE('2025-04-15 12:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Lunch with Colleagues');
-
-INSERT INTO diary_reminder (reminder_id, user_id, reminder_interval, reminder_time, reminder_title) 
-VALUES (20, 20, INTERVAL '6' DAY, TO_DATE('2025-06-06 16:30:00', 'YYYY-MM-DD HH24:MI:SS'), 'Weekly Check-In');
-
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (1, 1, 'Today I had a calm and peaceful day, focusing on work and some light reading. The weather was perfect for a walk in the park.', 'A Peaceful Day', TO_DATE('2025-03-01 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-03-01 08:30:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (2, 2, 'A busy day at work, but I managed to squeeze in some time for a coffee break with a good friend. We talked about our upcoming plans for the weekend.', 'Work and Catching Up', TO_DATE('2025-04-05 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-04-05 09:50:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (3, 3, 'A stressful but rewarding day. Managed to complete a project I had been working on for weeks, but now I feel exhausted. Time for a well-deserved break!', 'Project Completion', TO_DATE('2025-02-18 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-02-18 18:15:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (4, 4, 'Went for a long walk this morning and found myself thinking about life and future goals. Feeling inspired to work harder and stay focused.', 'Morning Reflection', TO_DATE('2025-05-12 07:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-05-12 07:10:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (5, 5, 'Had a wonderful lunch with family today. We discussed everything from old memories to future plans. It was great to reconnect with everyone.', 'Family Gathering', TO_DATE('2025-01-19 13:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-01-19 13:45:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (6, 6, 'The weekend getaway was a blast! Spent the day hiking in the mountains. The scenery was breathtaking, and I felt at peace with myself.', 'Weekend Getaway', TO_DATE('2025-03-22 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-03-22 18:30:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (7, 7, 'Today I tried a new recipe for dinner. It turned out better than I expected! Cooking has become such a relaxing hobby for me lately.', 'Cooking Experiment', TO_DATE('2025-04-15 20:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-04-15 20:30:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (8, 8, 'Received some challenging news today. It made me question a lot of things, but I’m determined to stay strong and move forward.', 'Challenging Times', TO_DATE('2025-05-04 10:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-05-04 10:15:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (9, 9, 'Had a quiet evening alone at home. Caught up on some reading and listened to music. Sometimes, solitude is exactly what you need.', 'Solitude and Reflection', TO_DATE('2025-06-10 21:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-06-10 21:30:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (10, 10, 'Visited the park today. Watched children play, couples walk hand in hand, and felt the warmth of the sun. Sometimes it’s nice to pause and appreciate the little things.', 'Park Visit', TO_DATE('2025-07-14 16:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-07-14 16:15:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (11, 11, 'I met a stranger today who shared an incredible story. It reminded me that everyone has their own journey, and we can always learn from each other.', 'The Strangers Story', TO_DATE('2025-08-01 14:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-08-01 14:10:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (12, 12, 'Spent the day volunteering at a local shelter. It was exhausting but so fulfilling to help others in need. I left with a heart full of gratitude.', 'Volunteering Experience', TO_DATE('2025-08-05 17:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-08-05 17:30:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (13, 13, 'Today was a reminder to take things slow and not rush. I spent most of the day reflecting on what truly matters in life.', 'Slow Down', TO_DATE('2025-09-10 11:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-09-10 11:20:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (14, 14, 'I finally started working on my side project. It’s been on my mind for a while, and I feel good about taking the first step towards it.', 'Side Project Beginnings', TO_DATE('2025-09-12 13:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-09-12 13:10:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (15, 15, 'Reflecting on how far I’ve come in my career. It’s been a journey of hard work, but the rewards have been worth it.', 'Career Milestones', TO_DATE('2025-09-20 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-09-20 09:45:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (16, 16, 'Had a deep conversation with a close friend today. It was one of those talks that really opens your eyes and makes you appreciate the bond you share.', 'Heart-to-Heart', TO_DATE('2025-10-05 18:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-10-05 18:50:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (17, 17, 'I’ve been feeling a bit lost lately. It’s hard to keep going when things feel uncertain, but I’m determined to push through and find clarity.', 'Feeling Lost', TO_DATE('2025-10-12 14:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-10-12 14:20:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (18, 18, 'Started a new hobby today—painting! It was a bit difficult at first, but I enjoyed the creative process and can’t wait to try again.', 'New Hobby', TO_DATE('2025-10-20 15:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-10-20 15:30:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (19, 19, 'A rainy day at home. I spent most of it reading and listening to music. Sometimes it’s nice to have a quiet day indoors.', 'Rainy Day Comfort', TO_DATE('2025-11-02 13:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-11-02 13:30:00', 'YYYY-MM-DD HH24:MI:SS'));
-
-INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time) 
-VALUES (20, 20, 'Celebrated my birthday today! Surrounded by friends and family, it was a joyful and memorable day. Grateful for another year.', 'Birthday Celebration', TO_DATE('2025-11-10 20:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-11-10 20:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
+VALUES (diary_seq.NEXTVAL, 10, 'A quiet day at home, spent most of it catching up on reading and doing some much-needed housework. It’s nice to have a low-key day every once in a while.', 'Quiet Day', TO_DATE('2025-02-10 12:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-02-10 12:30:00', 'YYYY-MM-DD HH24:MI:SS'));
