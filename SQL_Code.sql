@@ -17,7 +17,7 @@ CREATE SEQUENCE diary_image_seq START WITH 1 INCREMENT BY 1;
 ------------------------ Create Tables ----------------------
 -------------------------------------------------------------
 
-DROP TABLE diary_image CASCADE CONSTRAINTS;
+DROP TABLE diary_image CASCADE CONSTRAINTS;a
 DROP TABLE diary CASCADE CONSTRAINTS;
 DROP TABLE diary_reminder CASCADE CONSTRAINTS;
 DROP TABLE diary_users CASCADE CONSTRAINTS;
@@ -415,3 +415,5 @@ VALUES (diary_seq.NEXTVAL, 9, 'Today was a mix of ups and downs. I faced some ch
 
 INSERT INTO diary (diary_id, user_id, cypher_text, cypher_title, create_time, last_update_time)
 VALUES (diary_seq.NEXTVAL, 10, 'A quiet day at home, spent most of it catching up on reading and doing some much-needed housework. It’s nice to have a low-key day every once in a while.', 'Quiet Day', TO_DATE('2025-02-10 12:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_DATE('2025-02-10 12:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+commit;

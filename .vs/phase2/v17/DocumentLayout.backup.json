@@ -1,38 +1,30 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\haoak\\Documents\\VS\\phase2\\",
+  "WorkspaceRootPath": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\titlesform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|e:\\fcis\\level 3\\semester 6\\software engineering\\personal_diary_app\\phase2\\titlesform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\titlesform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|e:\\fcis\\level 3\\semester 6\\software engineering\\personal_diary_app\\phase2\\titlesform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\titlesform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\diaryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\diaryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\diaryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|c:\\users\\haoak\\documents\\vs\\phase2\\phase2\\diaryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|e:\\fcis\\level 3\\semester 6\\software engineering\\personal_diary_app\\phase2\\diaryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\diaryform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|c:\\users\\haoak\\documents\\vs\\phase2\\phase2\\signupform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|e:\\fcis\\level 3\\semester 6\\software engineering\\personal_diary_app\\phase2\\signupform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\signupform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\loginform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\loginform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\signupform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\signupform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\signupform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|c:\\users\\haoak\\documents\\vs\\phase2\\phase2\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|c:\\users\\haoak\\documents\\vs\\phase2\\phase2\\phase2.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{82FF0581-4257-45BA-BFDD-B739BF23F250}|phase2\\phase2.csproj|solutionrelative:phase2\\phase2.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     }
   ],
   "DocumentGroupContainers": [
@@ -42,103 +34,82 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 3,
           "Children": [
             {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "phase2.csproj",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\phase2.csproj",
-              "RelativeDocumentMoniker": "phase2\\phase2.csproj",
-              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\phase2.csproj",
-              "RelativeToolTip": "phase2\\phase2.csproj",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-04-16T13:51:50.194Z"
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
+              "Title": "DiaryForm.cs",
+              "DocumentMoniker": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\DiaryForm.cs",
+              "RelativeDocumentMoniker": "phase2\\DiaryForm.cs",
+              "ToolTip": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\DiaryForm.cs",
+              "RelativeToolTip": "phase2\\DiaryForm.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAcwBoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-17T09:05:47.82Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DiaryForm.cs [Design]",
+              "DocumentMoniker": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\DiaryForm.cs",
+              "RelativeDocumentMoniker": "phase2\\DiaryForm.cs",
+              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\DiaryForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-17T09:05:41.27Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "TitlesForm.cs",
+              "DocumentMoniker": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\TitlesForm.cs",
+              "RelativeDocumentMoniker": "phase2\\TitlesForm.cs",
+              "ToolTip": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\TitlesForm.cs",
+              "RelativeToolTip": "phase2\\TitlesForm.cs",
+              "ViewState": "AgIAAAQAAADAZWZmZmYUwA8AAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-17T08:46:02.317Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TitlesForm.cs [Design]",
+              "DocumentMoniker": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\TitlesForm.cs",
+              "RelativeDocumentMoniker": "phase2\\TitlesForm.cs",
+              "ToolTip": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\TitlesForm.cs [Design]",
+              "RelativeToolTip": "phase2\\TitlesForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-17T08:44:06.342Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "SignupForm.cs",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\SignupForm.cs",
+              "DocumentMoniker": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\SignupForm.cs",
               "RelativeDocumentMoniker": "phase2\\SignupForm.cs",
-              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\SignupForm.cs*",
-              "RelativeToolTip": "phase2\\SignupForm.cs*",
-              "ViewState": "AgIAAAoAAAAAAAAAAAAgwBwAAAAAAAAAAAAAAA==",
+              "ToolTip": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\SignupForm.cs",
+              "RelativeToolTip": "phase2\\SignupForm.cs",
+              "ViewState": "AgIAABwAAAAAAAAAAAAuwCUAAAA4AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-16T14:25:20.658Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\Program.cs",
-              "RelativeDocumentMoniker": "phase2\\Program.cs",
-              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\Program.cs",
-              "RelativeToolTip": "phase2\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAlAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-16T14:11:07.889Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "DiaryForm.cs",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\DiaryForm.cs",
-              "RelativeDocumentMoniker": "phase2\\DiaryForm.cs",
-              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\DiaryForm.cs",
-              "RelativeToolTip": "phase2\\DiaryForm.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-16T14:07:25.928Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "DiaryForm.cs [Design]",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\DiaryForm.cs",
-              "RelativeDocumentMoniker": "phase2\\DiaryForm.cs",
-              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\DiaryForm.cs [Design]",
-              "RelativeToolTip": "phase2\\DiaryForm.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-16T14:01:36.89Z",
-              "EditorCaption": " [Design]"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "TitlesForm.cs [Design]",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\TitlesForm.cs",
-              "RelativeDocumentMoniker": "phase2\\TitlesForm.cs",
-              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\TitlesForm.cs [Design]",
-              "RelativeToolTip": "phase2\\TitlesForm.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-16T13:54:35.286Z",
-              "EditorCaption": " [Design]"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 5,
               "Title": "SignupForm.cs [Design]",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\SignupForm.cs",
+              "DocumentMoniker": "E:\\FCIS\\Level 3\\semester 6\\Software Engineering\\Personal_Diary_App\\phase2\\SignupForm.cs",
               "RelativeDocumentMoniker": "phase2\\SignupForm.cs",
               "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\SignupForm.cs [Design]",
-              "RelativeToolTip": "phase2\\SignupForm.cs [Design]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-16T13:52:10.889Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "LoginForm.cs [Design]",
-              "DocumentMoniker": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\LoginForm.cs",
-              "RelativeDocumentMoniker": "phase2\\LoginForm.cs",
-              "ToolTip": "C:\\Users\\haoak\\Documents\\VS\\phase2\\phase2\\LoginForm.cs [Design]",
-              "RelativeToolTip": "phase2\\LoginForm.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-16T13:48:51.626Z"
             }
           ]
         }
